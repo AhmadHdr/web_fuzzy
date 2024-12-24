@@ -1,0 +1,111 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Analisis Fuzzy Logic Mamdani</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            padding-top: 50px; 
+            background-color: #f4f4f4; 
+        }
+        .plot-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Analisis Fuzzy Logic Mamdani</h1>
+        
+        <div class="row">
+            <div class="col-md-4 plot-container">
+                <h3>Fungsi Keanggotaan Input 1</h3>
+                <div id="input1-plot"></div>
+            </div>
+            <div class="col-md-4 plot-container">
+                <h3>Fungsi Keanggotaan Input 2</h3>
+                <div id="input2-plot"></div>
+            </div>
+            <div class="col-md-4 plot-container">
+                <h3>Fungsi Keanggotaan Output</h3>
+                <div id="output-plot"></div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6 offset-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Hitung Fuzzy Mamdani</h4>
+                        <form id="fuzzy-form">
+                            <div class="mb-3">
+                                <label for="input1" class="form-label">Input 1</label>
+                                <input type="number" class="form-control" id="input1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="input2" class="form-label">Input 2</label>
+                                <input type="number" class="form-control" id="input2" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Hitung</button>
+                        </form>
+                        <div id="result" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Render plot dari server
+        var input1Plot = {{ input1_plot | safe }};
+        Plotly.newPlot('input1-plot', input1Plot.data, input1Plot.layout);
+
+        var input2Plot = {{ input2_plot | safe }};
+        Plotly.newPlot('input2-plot', input2Plot.data, input2Plot.layout);
+
+        var outputPlot = {{ output_plot | safe }};
+        Plotly.newPlot('output-plot', outputPlot.data, outputPlot.layout);
+
+        // Handle form submission
+        $('#fuzzy-form').on('submit', function(e) {
+            e.preventDefault();
+            var input1 = $('#input1').val();
+            var input2 = $('#input2').val();
+
+            $.ajax({
+                url: '/calculate',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    input1: parseFloat(input1),
+                    input2: parseFloat(input2)
+                }),
+                success: function(response) {
+                    $('#result').html(`
+                        <div class="alert alert-success">
+                            <strong>Hasil Perhitungan:</strong> ${response.result}<br>
+                            <strong>Langkah Inferensi:</strong>
+                            <ul>
+                                <li>Fuzzifikasi: ${response.fuzzy_steps.fuzzification}</li>
+                                <li>Inferensi: ${response.fuzzy_steps.inference}</li>
+                                <li>Defuzzifikasi: ${response.fuzzy_steps.defuzzification}</li>
+                            </ul>
+                        </div>
+                    `);
+                },
+                error: function() {
+                    $('#result').html('<div class="alert alert-danger">Gagal melakukan perhitungan</div>');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
